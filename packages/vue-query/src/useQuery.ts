@@ -17,6 +17,7 @@ import type { QueryClient } from './queryClient'
 
 type NonUndefinedGuard<T> = T extends undefined ? never : T
 
+// TODO: Fix type error with generic query params
 export type UseQueryOptions<
   TQueryFnData = unknown,
   TError = DefaultError,
