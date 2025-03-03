@@ -100,6 +100,7 @@ const hydratableObserverResult = <
   return obj
 }
 
+// TODO: Fix client() undefined
 // Base Query Function that is used to create the query.
 export function createBaseQuery<
   TQueryFnData,
