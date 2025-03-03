@@ -124,6 +124,7 @@ export function createBaseQuery<
   // Causing a time out error. To prevent this we will queue the unsubscribe if the cleanup is called
   // before the resource has loaded
   let unsubscribeQueued = false
+  let dependentQueryResolved = false
 
   const defaultedOptions = createMemo(() => {
     const defaultOptions = client().defaultQueryOptions(options())
@@ -179,12 +180,27 @@ export function createBaseQuery<
   const createClientSubscriber = () => {
     const obs = observer()
     return obs.subscribe((result) => {
-      observerResult = result
-      queueMicrotask(() => {
-        if (unsubscribe) {
-          refetch()
-        }
-      })
+      const opts = options()
+      const isDependentQuery =
+        typeof opts.enabled === 'boolean' && !opts.enabled
+
+      if (isDependentQuery && !dependentQueryResolved) {
+        // Delay the result update slightly for dependent queries
+        queueMicrotask(() => {
+          dependentQueryResolved = true
+          observerResult = result
+          if (unsubscribe) {
+            refetch()
+          }
+        })
+      } else {
+        observerResult = result
+        queueMicrotask(() => {
+          if (unsubscribe) {
+            refetch()
+          }
+        })
+      }
     })
   }
 
@@ -355,6 +371,7 @@ export function createBaseQuery<
       resolver(observerResult)
       resolver = null
     }
+    dependentQueryResolved = false
   })
 
   createComputed(
